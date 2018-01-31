@@ -28,6 +28,9 @@ namespace QRMoveCar.Models
         public bool HasPhone { get { return !string.IsNullOrEmpty(AccountPhoneNumber); } }
 
         public List<Order> Orders { get; set; }
+        [JsonConverter(typeof(ObjectIdConverter))]
+        [JsonIgnore]
+        public ObjectId QRFileID { get; set; }
     }
 
     public class Order

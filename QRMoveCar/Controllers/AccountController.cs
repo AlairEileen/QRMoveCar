@@ -23,7 +23,7 @@ namespace QRMoveCar.Controllers
         private IHostingEnvironment hostingEnvironment;
         public AccountController(IHostingEnvironment environment)
         {
-           hostingEnvironment = environment;
+            hostingEnvironment = environment;
         }
 
         /// <summary>
@@ -233,18 +233,18 @@ namespace QRMoveCar.Controllers
                 return JsonResponseModel.ErrorJson;
             }
         }
-      
+
         /// <summary>
         /// 获取二维码
         /// </summary>
         /// <param name="uniacid">商户ID</param>
         /// <param name="accountID">用户ID</param>
         /// <returns></returns>
-        public IActionResult GetQRPic(string uniacid, string accountID)
+        public async Task<IActionResult> GetQRPic(string uniacid, string accountID)
         {
-            string fileUrl = thisData.GetQRPic(uniacid, new ObjectId(accountID),hostingEnvironment.ContentRootPath);
-            var stream = System.IO.File.OpenRead(fileUrl);
-            return File(stream, "Image/jpg", Path.GetFileName(fileUrl));
+            byte[] data = await thisData.GetQRPic(uniacid, new ObjectId(accountID), hostingEnvironment.ContentRootPath);
+
+            return File(data, "Image/jpg", $"{accountID}.jpg");
         }
         /// <summary>
         /// 获取邮寄费用

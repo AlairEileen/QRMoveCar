@@ -12,15 +12,18 @@ namespace QRMoveCar.AppData
     {
         protected MongoDBTool mongo;
         protected IMongoCollection<T> collection;
+        protected IMongoDatabase mongoDB;
         protected BaseData()
         {
             mongo = new MongoDBTool();
+            mongoDB = mongo.GetMongoDatabase();
             collection = mongo.GetMongoCollection<T>();
         }
 
         protected BaseData(string collectionName)
         {
             mongo = new MongoDBTool();
+            mongoDB = mongo.GetMongoDatabase();
             collection = mongo.GetMongoCollection<T>(collectionName);
         }
 

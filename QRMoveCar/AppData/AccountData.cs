@@ -2,6 +2,7 @@
 using ImageDAL;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.GridFS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QRDAL;
@@ -142,7 +143,7 @@ namespace QRMoveCar.AppData
 
         internal List<Order> GetOrderList(string uniacid, ObjectId accountID)
         {
-            return GetModelByIDAndUniacID(accountID, uniacid).Orders.FindAll(x=>x.IsPaid);
+            return GetModelByIDAndUniacID(accountID, uniacid).Orders.FindAll(x => x.IsPaid);
         }
 
         internal void CallAccount(string uniacid, ObjectId currentAccountID, ObjectId anotherAccountID)
@@ -220,7 +221,7 @@ namespace QRMoveCar.AppData
             collection.UpdateOne(x => x.uniacid.Equals(uniacid) && x.AccountID.Equals(accountID), Builders<AccountModel>.Update.Set(x => x.AccountPhoneNumber, phoneNumber));
         }
 
-        internal string GetQRPic(string uniacid, ObjectId accountID, string contentRootPath)
+        internal async Task<byte[]> GetQRPic(string uniacid, ObjectId accountID, string contentRootPath)
         {
             var account = GetModelByIDAndUniacID(accountID, uniacid);
             if (string.IsNullOrEmpty(account.AccountPhoneNumber) || string.IsNullOrEmpty(account.CarNumber))
@@ -228,23 +229,28 @@ namespace QRMoveCar.AppData
                 var em = new ExceptionModel() { ExceptionParam = ActionParams.code_error };
                 throw em;
             }
-            string qrPathName = $@"{MainConfig.BaseDir}{MainConfig.AvatarDir}";
-            string qrPath = $@"{MainConfig.BaseDir}{MainConfig.AvatarDir}{ account.AccountID}.jpg";
-            if (File.Exists(qrPath))
+            byte[] qrData;
+            var bucket = new GridFSBucket(mongoDB);
+            if (account.QRFileID != ObjectId.Empty)
             {
-                return qrPath;
+                return await bucket.DownloadAsBytesAsync(account.QRFileID);
             }
-            string info = $@"{We7Config.SiteRoot}account/GetAccountInfo?uniacid={uniacid}&AccountID={account.AccountID}";
-            Bitmap qr = QRCodeHelper.Create(info, 300);
+            string qrInfo = $@"{We7Config.SiteRoot}account/GetAccountInfo?uniacid={uniacid}&AccountID={account.AccountID}";
+            Bitmap qr = QRCodeHelper.Create(qrInfo, 300);
             Image qrRaw = ImageTools.ResizeImage(qr, 286, 286, 0);
             string bgPath = $@"{contentRootPath}/wwwroot/images/qr_bg.jpg";
             Bitmap qrBit = ImageTools.CombinImage(new Bitmap(bgPath), qrRaw, 171, 128);
-            if (!Directory.Exists(qrPathName))
-            {
-                Directory.CreateDirectory(qrPathName);
-            }
-            qrBit.Save(qrPath, ImageFormat.Jpeg);
-            return qrPath;
+            MemoryStream ms = new MemoryStream();
+            qrBit.Save(ms, ImageFormat.Jpeg);
+            qrData = ms.GetBuffer();
+            var options = new GridFSUploadOptions {
+                Metadata=new BsonDocument {
+                    {"content-type","Image/jpg" }
+                }
+            };
+            var id = await bucket.UploadFromBytesAsync($"qr_{accountID.ToString()}.jpg", qrData,options);
+            collection.UpdateOne(x => x.AccountID.Equals(accountID) && x.uniacid.Equals(uniacid), Builders<AccountModel>.Update.Set(x => x.QRFileID, id));
+            return qrData;
         }
 
 
