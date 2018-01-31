@@ -1,0 +1,119 @@
+﻿@using QRMoveCar.Views;
+@using We7Tools.Extend;
+@model List<OrderViewModel>
+@{
+    ViewConst.SetRoutType(ViewData, RoutType.购买记录);
+}
+<style>
+    .table th, .table td {
+        text-align: center;
+        vertical-align: middle !important;
+    }
+</style>
+<div class="jumbotron">
+    <h1>@RoutType.购买记录.ToString()</h1>
+</div>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <td>头像</td>
+                <td>昵称</td>
+                <td>车牌号</td>
+                <td>创建时间</td>
+                <td>收货人</td>
+                <td>联系方式</td>
+                <td>收货地址</td>
+                <td colspan="2">操作</td>
+            </tr>
+        </thead>
+        <tbody id="thList">
+            @foreach (var item in Model)
+            {
+                var send = (item.OrderInfo.Logistics != null);
+                <tr>
+                    <td><img class="img-circle" width="70" height="70" src="@item.AccountAvatar" /></td>
+                    <td>@item.AccountName</td>
+                    <td>@item.CarNumber</td>
+                    <td>@item.OrderInfo.CreateTime</td>
+                    <td>@item.OrderInfo.Name</td>
+                    <td>@item.OrderInfo.PhoneNumber</td>
+                    <td>@item.OrderInfo.Address</td>
+                    <td><a class="btn btn-info" href="@Context.Request.PathBase/Account/GetQRPic?uniacid=@item.uniacid&accountID=@item.AccountID">下载二维码</a></td>
+                    <td>
+                        <a class="btn btn-danger" data-toggle='modal' data-target='#sendOrderModal' onclick='showSendModal("@item.AccountID","@item.OrderInfo.OrderID","@(send?item.OrderInfo.Logistics.Company:"null")","@(send?item.OrderInfo.Logistics.Number:"null")")'>
+                            @(send ? "修改单号" : "发货")
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- #region 发货开始 -->
+<div class="modal fade" id="sendOrderModal" tabindex="-1" role="dialog" aria-labelledby="sendOrderTitle" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="sendOrderTitle">发货</h4>
+            </div>
+            <div class="modal-body">
+                <input class="hidden" id="sendOrderID" />
+                <p><label>文件名：</label><span id="sendOrderNumber"></span></p>
+                <label>物流公司：</label>
+                <input class="form-control" type="text" id="sendOrderCompany" />
+                <label>运单号：</label>
+                <input class="form-control" type="text" id="sendOrderCompanyNumber" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="sendOrderClose" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" onclick="sendOrder()" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- #endregion 发货结束 -->
+
+<script>
+    function showSendModal(aID,oID,company,number) {
+        $("#sendOrderNumber").text(aID);
+        $("#sendOrderID").val(oID);
+        if (company != "null") {
+            $("#sendOrderCompany").val(company);
+        }
+        if (number != "null") {
+            $("#sendOrderCompanyNumber").val(number);
+        }
+    }
+    function sendOrder() {
+        var aID = $("#sendOrderNumber").text();
+        var sendOrderCompany = $("#sendOrderCompany").val();
+        var sendOrderCompanyNumber = $("#sendOrderCompanyNumber").val();
+      var oID=  $("#sendOrderID").val();
+          var json = {
+              "OrderID": oID,
+              "Logistics": {
+                  "Company":sendOrderCompany,
+                  "Number":sendOrderCompanyNumber
+            }
+        };
+        $.ajax({
+            type: "post",
+            url: "@Context.Request.PathBase/Merchant/SendOrder?accountID=" + aID,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(json),
+            dataType: "json",
+            success: function (message) {
+                if (message.StatusCode == @((int)Tools.ActionParams.code_ok)) {
+                    alert("发货成功");
+                    $("#sendOrderClose").click();
+                }
+            },
+            error: function (message) {
+                alert("发货失败");
+            }
+        });
+    }
+</script>

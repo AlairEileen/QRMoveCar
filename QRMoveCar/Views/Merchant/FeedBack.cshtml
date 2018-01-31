@@ -1,0 +1,37 @@
+﻿@using QRMoveCar.Views;
+@model List<FeedbackModel>
+@{
+    ViewConst.SetRoutType(ViewData, RoutType.反馈记录);
+}
+<style>
+    .table th, .table td {
+        text-align: center;
+        vertical-align: middle !important;
+    }
+</style>
+<div class="jumbotron">
+    <h1>@RoutType.反馈记录.ToString()</h1>
+</div>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <td>反馈内容</td>
+                <td>创建时间</td>
+            </tr>
+        </thead>
+        <tbody id="thList">
+            @if (Model!=null)
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="hidden">@item.FeedbackID</td>
+                        <td>@item.FeedBackContent</td>
+                        <td>@item.CreateTime</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

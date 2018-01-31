@@ -1,0 +1,15 @@
+﻿@using QRMoveCar.Views;
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewConst.SetRoutType(ViewData, RoutType.错误);
+}
+<div class="jumbotron">
+    <h1 class="danger">@ViewData["ErrorInfo"]</h1>
+</div>
+@*<h2>@Context.Request.Path</h2>
+    <h2>@Context.Request.PathBase</h2>
+    <h2>@Context.Request.Protocol</h2>
+    <h2>@Context.Request.HttpContext.Request.Path</h2>
+    <h2>@Context.Request.Host.Value</h2>*@

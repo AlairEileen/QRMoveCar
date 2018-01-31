@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="4.5.0-preview1-25914-04" />
+    <PackageReference Include="zxing-core" Version="0.14.0.2" />
+  </ItemGroup>
+
+</Project>

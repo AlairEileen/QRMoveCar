@@ -1,0 +1,39 @@
+﻿@using QRMoveCar.Views;
+@model List<AccountModel>
+@{
+    ViewConst.SetRoutType(ViewData, RoutType.客户信息);
+}
+<style>
+    .table th, .table td {
+        text-align: center;
+        vertical-align: middle !important;
+    }
+</style>
+<div class="jumbotron">
+    <h1>@RoutType.客户信息.ToString()</h1>
+</div>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <td>头像</td>
+                <td>昵称</td>
+                <td>车牌号</td>
+                <td>创建时间</td>
+                <td>上次登录时间</td>
+            </tr>
+        </thead>
+        <tbody id="thList">
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td><img class="img-circle" width="70" height="70" src="@item.AccountAvatar" /></td>
+                    <td>@item.AccountName</td>
+                    <td>@item.CarNumber</td>
+                    <td>@item.CreateTime</td>
+                    <td>@item.LastChangeTime</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

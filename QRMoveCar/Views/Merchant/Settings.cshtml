@@ -1,0 +1,115 @@
+﻿@using QRMoveCar.Views;
+@model QRMoveCar.Models.ManageViewModel
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewConst.SetRoutType(ViewData, RoutType.系统管理);
+}
+<div class="jumbotron">
+    <h1>@RoutType.系统管理.ToString()</h1>
+</div>
+<h2>设置云迅信息</h2>
+<h6>
+    <a href="http://www.ytx.net" class="btn btn-link">点此注册</a>
+</h6>
+<hr />
+<div class="row">
+    <div class="col-sm-3 col-xs-6">
+        <input class="form-control" id="AccountSID" value="@Model.YTX.AccountSID" type="text" placeholder="填写 ACCOUNT SID" />
+    </div>
+    <div class="col-sm-3 col-xs-6">
+        <input class="form-control" id="AuthToken" value="@Model.YTX.AuthToken" type="text" placeholder="填写 AUTH TOKEN" />
+    </div>
+    <div class="col-sm-3 col-xs-6">
+        <input class="form-control" id="AppID" value="@Model.YTX.AppID" type="text" placeholder="填写 应用ID" />
+    </div>
+    <div class="col-sm-3 col-xs-6">
+
+        <label>
+            <input type="checkbox" @(Model.YTX.IsTestApp ? "checked" : "") id="IsTestApp" />
+            AppID为测试AppID
+        </label>    
+    </div>
+
+</div>
+<br />
+<div class="row">
+    <div class="col-xs-6 col-sm-3 pull-right">
+        <button class="btn btn-primary col-xs-12" onclick="setYTX()">提交七牛云信息设置</button>
+    </div>
+</div>
+<br />
+<br />
+<h2>小程序交易设置</h2>
+<hr />
+<div class="row">
+    <div class="col-sm-4 col-xs-6">
+        <label>设置二维码寄送费用</label>
+    </div>
+    <div class="col-sm-4 col-xs-6">
+        <input class="form-control" id="serviceRate" value="@Model.QRSendFee" type="text" placeholder="填写二维码寄送费用" />
+    </div>
+    <div class="col-sm-4 col-xs-6">
+        <button class="btn btn-primary" onclick="setServiceRate()">提交二维码寄送费用设置</button>
+    </div>
+</div>
+<br />
+<br />
+<h2>小程序管理</h2>
+<hr />
+<div class="row">
+    <div class="col-sm-6 col-xs-3">
+        <a class="btn btn-primary" href="ProcessMiniZipDownload">点击下载小程序包</a>
+    </div>
+</div>
+<br />
+<br />
+<script>
+    function setYTX() {
+        var AccountSID = $("#AccountSID").val();
+        var AuthToken = $("#AuthToken").val();
+        var AppID = $("#AppID").val();
+        var IsTestApp = $("#IsTestApp").is(":checked");
+        var json = {
+            AccountSID: AccountSID,
+            AuthToken: AuthToken,
+            AppID: AppID,
+            IsTestApp: IsTestApp
+        };
+         $.ajax({
+                    type: "post",
+                    url: "@Context.Request.PathBase/Merchant/SetYTX",
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(json),
+                    dataType: "json",
+                    success: function (message) {
+                       if (message.StatusCode == @((int)Tools.ActionParams.code_ok)) {
+                            alert("设置成功");
+                         } else {
+                           alert("设置失败");
+                         }
+                    },
+                    error: function (message) {
+                        alert("设置失败");
+                    }
+                });
+
+
+    }
+    function setServiceRate() {
+        var serviceRate = $("#serviceRate").val();
+        if ($.trim(serviceRate).length == 0) {
+            return;
+        }
+        $.getJSON("@Context.Request.PathBase/Merchant/SetQRSendFee", { qRSendFee: serviceRate}, function (data, status) {
+             if (data.StatusCode == @((int)Tools.ActionParams.code_ok)) {
+                            alert("设置成功");
+                         } else {
+                           alert("设置失败");
+                         }
+         });
+    }
+
+
+</script>
