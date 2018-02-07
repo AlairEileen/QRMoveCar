@@ -6,9 +6,9 @@ namespace ConfigData
 {
     public class MainConfig
     {
-        public const bool IsDev = true;
+        public const bool IsDev = false;
 
-        public const string BaseDir = "/home/project_data/"+(IsDev? "qr_move_car/" : "RedPackets/");
+        public const string BaseDir = "/home/project_data/"+(IsDev? "qr_move_car/" : "QRMoveCar/");
         public const string AvatarDir = "avatar/";
         public const string TempDir = "temp/";
         public const string AlbumDir = "album/";

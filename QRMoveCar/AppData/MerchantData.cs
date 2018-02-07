@@ -101,28 +101,22 @@ namespace QRMoveCar.AppData
             }
         }
 
-        internal void PushCert(string uniacid, IFormFile file)
+        internal void PushWeChatQRRuleVerify(string uniacid, IFormFile file, string contentRootPath)
         {
             long size = 0;
             var filename = ContentDispositionHeaderValue
                                   .Parse(file.ContentDisposition)
                                   .FileName
                                   .Trim('"');
-            string dbSaveDir = $@"{MainConfig.CertsDir}{uniacid}/";
-            string saveDir = $@"{MainConfig.BaseDir}{dbSaveDir}";
+            string dbSaveDir = $@"wwwroot/account/";
+            string saveDir = $@"{contentRootPath}/{dbSaveDir}";
             if (!Directory.Exists(saveDir))
             {
                 Directory.CreateDirectory(saveDir);
             }
 
-            string[] files = Directory.GetFiles(saveDir);
-            foreach (var item in files)
-            {
-                File.Delete(item);
-            }
-
             string exString = filename.Substring(filename.LastIndexOf("."));
-            string saveName = Guid.NewGuid().ToString("N");
+            string saveName = Path.GetFileNameWithoutExtension(filename);
             filename = $@"{saveDir}{saveName}{exString}";
 
             size += file.Length;
@@ -130,7 +124,7 @@ namespace QRMoveCar.AppData
             {
                 file.CopyTo(fs);
                 fs.Flush();
-                string[] fileUrls = new string[] { $@"{dbSaveDir}{saveName}{exString}" };
+                //string[] fileUrls = new string[] { $@"{dbSaveDir}{saveName}{exString}" };
                 //FileManager.Exerciser(uniacid, filename, null).SaveFile();
 
                 var companyCollection = mongo.GetMongoCollection<CompanyModel>();
@@ -140,15 +134,17 @@ namespace QRMoveCar.AppData
                     companyCollection.InsertOne(new CompanyModel()
                     {
                         uniacid = uniacid,
-                        CertFileName = $"{saveName}{exString}"
+                        WeChatQRVerifyFileName = $"{saveName}{exString}"
                     });
                 }
                 else
                 {
-                    companyCollection.UpdateOne(x => x.uniacid.Equals(uniacid), Builders<CompanyModel>.Update.Set(x => x.CertFileName, $"{saveName}{exString}"));
+                    companyCollection.UpdateOne(x => x.uniacid.Equals(uniacid), Builders<CompanyModel>.Update.Set(x => x.WeChatQRVerifyFileName, $"{saveName}{exString}"));
                 }
             }
         }
+
+     
 
         internal void SendOrder(string uniacid, ObjectId accountID, Order order)
         {

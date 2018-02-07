@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Tools.Json;
 using Tools.Models;
+using Tools.Response.Json;
 using YTXDAL;
 
 namespace QRMoveCar.Models
@@ -24,11 +24,13 @@ namespace QRMoveCar.Models
         /// </summary>
         public decimal QRSendFee { get; set; }
         public string CertFileName { get; set; }
-
+        public string WeChatQRVerifyFileName { get; set; }
+        [BsonIgnore]
+        public bool HasWeChatQRverifyFileName { get { return !string.IsNullOrEmpty(WeChatQRVerifyFileName); } }
         public YTXModel YTX { get; set; }
     }
 
-    
+
 
     public class QiNiuModel
     {

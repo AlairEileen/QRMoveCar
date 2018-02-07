@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using System;
 
-namespace Tools.Json
+namespace Tools.Response.Json
 {
     public class ObjectIdConverter : JsonConverter
     {

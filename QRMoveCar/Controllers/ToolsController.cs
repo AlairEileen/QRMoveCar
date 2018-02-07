@@ -10,10 +10,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QRMoveCar.Models;
 using Tools.DB;
-using Tools.Json;
 using Tools.Models;
 using Tools.Response;
-using Tools.ResponseModels;
+using Tools.Response.Json;
 using YTXDAL;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -37,7 +36,7 @@ namespace QRMoveCar.Controllers
         /// <param name="uniacid">商户ID</param>
         /// <param name="phoneNumber">手机号码</param>
         /// <returns></returns>
-        public string GetSmsVerifyCode(string uniacid, string phoneNumber)
+        public IActionResult GetSmsVerifyCode(string uniacid, string phoneNumber)
         {
 
             var filter = Builders<VerifyCodeModel>.Filter;
@@ -51,7 +50,7 @@ namespace QRMoveCar.Controllers
                     Content = "商户未设置云通信信息"
                 };
                 em.Save();
-                return JsonResponseModel.ErrorJson;
+                return this.JsonErrorStatus();
             }
 
             var collection = mongo.GetMongoCollection<VerifyCodeModel>();
@@ -83,9 +82,9 @@ namespace QRMoveCar.Controllers
             if (hasVal && statuscode.ToString().Equals("0"))
             {
                 collection.InsertOne(vcm);
-                return JsonResponseModel.SuccessJson;
+                return this.JsonErrorStatus();
             }
-            return JsonResponseModel.ErrorJson;
+            return this.JsonErrorStatus();
         }
 
         /// <summary>
@@ -93,7 +92,7 @@ namespace QRMoveCar.Controllers
         /// </summary>
         /// <param name="uniacid">商户ID</param>
         /// <returns></returns>
-        public string PushFeedback()
+        public IActionResult PushFeedback()
         {
             try
             {
@@ -101,11 +100,11 @@ namespace QRMoveCar.Controllers
                 FeedbackModel fm = JsonConvert.DeserializeObject<FeedbackModel>(json);
                 fm.CreateTime = DateTime.Now;
                 new MongoDBTool().GetMongoCollection<FeedbackModel>().InsertOne(fm);
-                return JsonResponseModel.SuccessJson;
+                return this.JsonErrorStatus();
             }
             catch (Exception)
             {
-                return JsonResponseModel.ErrorJson;
+                return this.JsonErrorStatus();
                 throw;
             }
 
@@ -115,20 +114,17 @@ namespace QRMoveCar.Controllers
         /// 获取车牌省简称
         /// </summary>
         /// <returns></returns>
-        public async Task<string> GetProvinceSimpleName()
+        public async Task<IActionResult> GetProvinceSimpleName()
         {
             try
             {
                 await InitCarNumberModel();
-                JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings();
-                string[] param = new string[] { "StatusCode", "JsonData", "Name" };
-                jsonSerializerSettings.ContractResolver = new LimitPropsContractResolver(param);
-                string jsonString = JsonConvert.SerializeObject(new BaseResponseModel<List<CarNumberModel>>() { StatusCode = Tools.ActionParams.code_ok, JsonData = carNumberList }, jsonSerializerSettings);
-                return jsonString;
+                string[] param = new string[] { "JsonData", "Name" };
+                return this.JsonSuccessWithLimit(new JsonResponse1<List<CarNumberModel>>() { JsonData = carNumberList }, param);
             }
             catch (Exception)
             {
-                return JsonResponseModel.ErrorJson;
+                return this.JsonErrorStatus();
                 throw;
             }
         }
@@ -137,30 +133,27 @@ namespace QRMoveCar.Controllers
         /// </summary>
         /// <param name="provinceSimpleName">车牌省简称</param>
         /// <returns></returns>
-        public async Task<string> GetCityCode(string provinceSimpleName)
+        public async Task<IActionResult> GetCityCode(string provinceSimpleName)
         {
             try
             {
                 await InitCarNumberModel();
-                JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings();
                 string[] param = new string[] { "StatusCode", "JsonData", "Code" };
-                jsonSerializerSettings.ContractResolver = new LimitPropsContractResolver(param);
-                var codeList = carNumberList.Find(x=>x.Name.Equals(provinceSimpleName)).Codes;
-                string jsonString = JsonConvert.SerializeObject(new BaseResponseModel<List<CarNumberCodeModel>>() { StatusCode = Tools.ActionParams.code_ok, JsonData = codeList }, jsonSerializerSettings);
-                return jsonString;
+                var codeList = carNumberList.Find(x => x.Name.Equals(provinceSimpleName)).Codes;
+             return   this.JsonSuccessWithLimit(new JsonResponse1<List<CarNumberCodeModel>>() { JsonData = codeList }, param);
             }
             catch (Exception)
             {
-                return JsonResponseModel.ErrorJson;
+                return this.JsonErrorStatus();
                 throw;
             }
         }
 
-            private Task InitCarNumberModel()
+        private Task InitCarNumberModel()
         {
             return Task.Run(() =>
             {
-                if (carNumberList==null||carNumberList.Count==0)
+                if (carNumberList == null || carNumberList.Count == 0)
                 {
                     string newJsonPath = $@"{hostingEnvironment.ContentRootPath}/wwwroot/account/car_number_new.json";
                     string oldJson = System.IO.File.ReadAllText(newJsonPath);

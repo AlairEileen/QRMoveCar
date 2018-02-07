@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using Newtonsoft.Json;
@@ -14,6 +16,7 @@ using System.Threading.Tasks;
 using Tools.DB;
 using Tools.Models;
 using Tools.Response;
+using Tools.Response.Json;
 using YTXDAL;
 using ZXing.Common;
 
@@ -104,7 +107,7 @@ namespace QRMoveCar.Controllers
             return json;
         }
 
-        public string CallMany()
+        public IActionResult CallMany()
         {
             var mongo = new MongoDBTool();
 
@@ -116,7 +119,7 @@ namespace QRMoveCar.Controllers
                     Content = "商户未设置云通信信息"
                 };
                 em.Save();
-                return JsonResponseModel.ErrorJson;
+                return this.JsonErrorStatus();
             }
 
 
@@ -137,19 +140,19 @@ namespace QRMoveCar.Controllers
             bool hasVal = jObj.TryGetValue("statusCode", out statuscode);
             if (hasVal && statuscode.ToString().Equals("0"))
             {
-                return JsonResponseModel.SuccessJson;
+                return this.JsonSuccessStatus();
             }
-            return JsonResponseModel.ErrorJson;
+            return this.JsonErrorStatus();
         }
 
 
-        public async Task<string> FS()
+        public async Task<IActionResult> FS()
         {
             var mongo = new MongoDBTool().GetMongoDatabase();
             var bucket = new GridFSBucket(mongo);
             string newJsonPath = $@"{hostingEnvironment.ContentRootPath}/wwwroot/account/car_number_new.json";
             await bucket.UploadFromBytesAsync(Path.GetFileNameWithoutExtension(newJsonPath), System.IO.File.ReadAllBytes(newJsonPath));
-            return JsonResponseModel.SuccessJson;
+            return this.JsonSuccessStatus();
         }
 
         public async Task<IActionResult> FSDown()
@@ -160,6 +163,45 @@ namespace QRMoveCar.Controllers
             byte[] data = await bucket.DownloadAsBytesByNameAsync("car_number_new");
             return File(data,"application/json", "car_number_new.json");
         }
+
+        public string Cmd()
+        {
+            var mongo = new MongoDBTool().GetMongoCollection<TestTTL>();
+            var options=new CreateIndexOptions<TestTTL>();
+            var be = new BsonElement("expireAfterSeconds", 20);
+            //options.StorageEngine = new BsonDocument { { "fsdfdsfd", 20 } };
+            //options.Weights = new BsonDocument { { "expireAfterSeconds", 20 } };
+            options.Name = "testIndex";
+            options.Version = 1;
+            //mongo.Indexes.CreateOne(new BsonDocument() { { "CreateTime", 1 } } ,options);
+            var bd = new BsonDocument() { { "CreateTime", 1 } };
+            var idk = Builders<TestTTL>.IndexKeys;
+            //idk.Combine();
+            idk.Ascending(x => x.CreateTime);
+            var iod = new IndexOptionDefaults();
+            options.ExpireAfter = new TimeSpan(0,0,20);
+            mongo.Indexes.CreateOne(new BsonDocument() { { "CreateTime", 1 } },options);
+            mongo.InsertOne(new TestTTL() { CreateTime=DateTime.Now,Code="fsdfsdf"});
+            return "sss";
+        }
+        public string cdd()
+        {
+            VerifyCodeModel.Collection.InsertOne(new VerifyCodeModel() {CreateTime=DateTime.Now,VerifyCode="4324324" });
+            return "fdfsd";
+        }
+
+    }
+   
+    internal class TestTTL 
+    {
+        [JsonConverter(typeof(DateConverterEndMinute))]
+        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
+        public DateTime CreateTime { get; set; }
+        [BsonId]
+        [JsonConverter(typeof(ObjectIdConverter))]
+        public ObjectId TestID { get; set; }
+
+        public string Code { get; set; }
 
     }
 

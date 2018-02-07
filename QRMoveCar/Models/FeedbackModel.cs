@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Tools.Json;
+using Tools.Response.Json;
 
 namespace QRMoveCar.Models
 {
@@ -15,7 +15,7 @@ namespace QRMoveCar.Models
         [JsonConverter(typeof(ObjectIdConverter))]
         public ObjectId FeedbackID { get; set; }
         public string FeedBackContent { get; set; }
-        [JsonConverter(typeof(Tools.Json.DateConverterEndMinute))]
+        [JsonConverter(typeof(DateConverterEndMinute))]
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime CreateTime { get; set; }
         public string uniacid { get; set; }

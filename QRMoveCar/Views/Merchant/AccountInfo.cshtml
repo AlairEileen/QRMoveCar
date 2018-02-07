@@ -19,6 +19,7 @@
                 <td>头像</td>
                 <td>昵称</td>
                 <td>车牌号</td>
+                <td>手机号码</td>
                 <td>创建时间</td>
                 <td>上次登录时间</td>
             </tr>
@@ -26,13 +27,14 @@
         <tbody id="thList">
             @foreach (var item in Model)
             {
-                <tr>
-                    <td><img class="img-circle" width="70" height="70" src="@item.AccountAvatar" /></td>
-                    <td>@item.AccountName</td>
-                    <td>@item.CarNumber</td>
-                    <td>@item.CreateTime</td>
-                    <td>@item.LastChangeTime</td>
-                </tr>
+            <tr>
+                <td><img class="img-circle" width="70" height="70" src="@item.AccountAvatar" /></td>
+                <td>@item.AccountName</td>
+                <td>@item.CarNumber</td>
+                <td>@item.AccountPhoneNumber</td>
+                <td>@item.CreateTime</td>
+                <td>@item.LastChangeTime</td>
+            </tr>
             }
         </tbody>
     </table>

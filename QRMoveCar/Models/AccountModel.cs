@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Tools.Json;
 using Tools.Models;
+using Tools.Response.Json;
 
 namespace QRMoveCar.Models
 {
@@ -41,6 +41,7 @@ namespace QRMoveCar.Models
         public string Address { get; set; }
         public string Name { get; set; }
         public string PhoneNumber { get; set; }
+        public int GoodsNumber { get; set; }
         public string WeChatOrderID { get; set; }
         public bool IsPaid { get; set; }
         public decimal Total { get; set; }
@@ -48,7 +49,7 @@ namespace QRMoveCar.Models
         /// 物流信息
         /// </summary>
         public Logistics Logistics { get; set; }
-        [JsonConverter(typeof(Tools.Json.DateConverterEndMinute))]
+        [JsonConverter(typeof(DateConverterEndMinute))]
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime CreateTime { get; set; }
     }

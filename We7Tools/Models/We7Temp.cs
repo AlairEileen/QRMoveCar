@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Tools.Json;
+using Tools.Response.Json;
 
 namespace We7Tools.Models
 {

@@ -18,8 +18,8 @@ namespace Tools.DB
         /// <summary>
         /// 指定的数据库
         /// </summary>
-        private const string dbName =ConstantProperty.MongoDBName;
-     
+        private const string dbName = ConstantProperty.MongoDBName;
+
         private static IMongoDatabase mongoDatabase;
         /// <summary>
         /// 获取数据库
@@ -31,7 +31,7 @@ namespace Tools.DB
             {
                 var connectionString = localConn;
 #if DEBUG
-                connectionString =lineConn;
+                connectionString = lineConn;
 #endif
                 MongoClient mongoClient = new MongoClient(connectionString);
                 mongoDatabase = mongoClient.GetDatabase(dbName);
@@ -62,6 +62,6 @@ namespace Tools.DB
             return GetMongoDatabase().GetCollection<T>(collectionName);
         }
 
-       
+
     }
 }

@@ -7,7 +7,7 @@ namespace Tools.Models
     public class FileModel<T>
     {
         [BsonId]
-        [JsonConverter(typeof(Tools.Json.ObjectIdConverter))]
+        [JsonConverter(typeof(Tools.Response.Json.ObjectIdConverter))]
         public ObjectId FileID { get; set; }
         /// <summary>
         /// 0：源文件，1：中压缩文件，2：最小文件

@@ -11,7 +11,7 @@ namespace Tools.Models
     {
         public string Name { get; set; }
         public string Province { get; set; }
-        public List<CarNumberCodeModel> Codes { get; set; }  
+        public List<CarNumberCodeModel> Codes { get; set; }
     }
 
     public class CarNumberCodeModel

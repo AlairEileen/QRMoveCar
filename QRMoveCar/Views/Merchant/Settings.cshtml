@@ -29,14 +29,14 @@
         <label>
             <input type="checkbox" @(Model.YTX.IsTestApp ? "checked" : "") id="IsTestApp" />
             AppID为测试AppID
-        </label>    
+        </label>
     </div>
 
 </div>
 <br />
 <div class="row">
     <div class="col-xs-6 col-sm-3 pull-right">
-        <button class="btn btn-primary col-xs-12" onclick="setYTX()">提交七牛云信息设置</button>
+        <button class="btn btn-primary col-xs-12" onclick="setYTX()">提交云迅信息设置</button>
     </div>
 </div>
 <br />
@@ -56,6 +56,31 @@
 </div>
 <br />
 <br />
+<h2>小程序二维码扫描设置</h2>
+<hr />
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <label>微信二维码规则:<span class="text-danger">@(Context.Request.Scheme+"://"+ Context.Request.Host.ToString()+Context.Request.PathBase)/account/GetAccountInfo?uniacid=@Model.uniacid</span></label>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-4 col-xs-6">
+        <label>上传微信二维码验证文件（<span class="text-danger">类似：uEZMcM24BZ.txt</span>）</label>
+    </div>
+
+    <div class="col-sm-4 col-xs-6">
+        <input type="file" onchange="loadFile(this)" class="hidden" id="verifyFile" />
+        <div class="input-append">
+            <a class="btn btn-default" onclick="$('input[id=verifyFile]').click();">选择 微信二维码验证文件</a>
+            <span>未选择（必须选择）</span>
+        </div>
+    </div>
+    <div class="col-sm-4 col-xs-6">
+        <button class="btn btn-primary" onclick="uploadCert()">@(Model.HasWeChatQRverifyFileName? "已上传 重新提交微信二维码验证文件" : "提交微信二维码验证文件")</button>
+    </div>
+</div>
+<br />
+<br />
 <h2>小程序管理</h2>
 <hr />
 <div class="row">
@@ -66,6 +91,41 @@
 <br />
 <br />
 <script>
+    function loadFile(o, maxLength) {
+        if (maxLength != undefined && o.files.length > maxLength) {
+            alert("最多可以选择" + maxLength + "张");
+            return;
+        }
+        var text = o.files.length == 1 ? o.files[0].name : o.files.length + "张图片";
+        $(o).next().find("span").html(text);
+    }
+      function uploadCert() {
+          var planGoodsListPic = $("#verifyFile").get(0);
+        var files = planGoodsListPic.files;
+        var data = new FormData();
+        for (var i = 0; i < files.length; i++) {
+            data.append(files[i].name, files[i]);
+        }
+        $.ajax({
+            type: "POST",
+            url: "@Context.Request.PathBase/Merchant/PushWeChatQRRuleVerify",
+            contentType: false,
+            processData: false,
+            data: data,
+            success: function (message) {
+                var data = JSON.parse(message);
+                if (data.StatusCode == @((int)Tools.Response.ResponseStatus.请求成功)) {
+                            alert("设置成功");
+                         } else {
+                           alert("设置失败");
+                         }
+            },
+            error: function () {
+                alert("There was error uploading files!");
+            }
+        });
+    }
+
     function setYTX() {
         var AccountSID = $("#AccountSID").val();
         var AuthToken = $("#AuthToken").val();
@@ -84,7 +144,7 @@
                     data: JSON.stringify(json),
                     dataType: "json",
                     success: function (message) {
-                       if (message.StatusCode == @((int)Tools.ActionParams.code_ok)) {
+                       if (message.StatusCode == @((int)Tools.Response.ResponseStatus.请求成功)) {
                             alert("设置成功");
                          } else {
                            alert("设置失败");
@@ -103,7 +163,7 @@
             return;
         }
         $.getJSON("@Context.Request.PathBase/Merchant/SetQRSendFee", { qRSendFee: serviceRate}, function (data, status) {
-             if (data.StatusCode == @((int)Tools.ActionParams.code_ok)) {
+             if (data.StatusCode == @((int)Tools.Response.ResponseStatus.请求成功)) {
                             alert("设置成功");
                          } else {
                            alert("设置失败");

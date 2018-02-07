@@ -10,10 +10,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Tools;
-using Tools.Json;
 using Tools.Models;
 using Tools.Response;
-using Tools.ResponseModels;
+using Tools.Response.Json;
 using WXSmallAppCommon.Models;
 
 namespace QRMoveCar.Controllers
@@ -35,34 +34,30 @@ namespace QRMoveCar.Controllers
         /// <param name="encryptedData"></param>
         /// <returns></returns>
         [HttpGet]
-        public string GetAccountID(string uniacid, string code, string iv, string encryptedData)
+        public IActionResult GetAccountID(string uniacid, string code, string iv, string encryptedData)
         {
             try
             {
-                BaseResponseModel<AccountModel> responseModel = new BaseResponseModel<AccountModel>();
+                JsonResponse1<AccountModel> responseModel = new JsonResponse1<AccountModel>();
 
                 //WXSmallAppCommon.Models.WXAccountInfo wXAccount = WXSmallAppCommon.WXInteractions.WXLoginAction.ProcessRequest(code, iv, encryptedData);
                 ///微擎方式
                 WXSmallAppCommon.Models.WXAccountInfo wXAccount = We7Tools.We7Tools.GetWeChatUserInfo(uniacid, code, iv, encryptedData);
                 var accountCard = thisData.SaveOrdUpdateAccount(uniacid, wXAccount);
-                ActionParams stautsCode = ActionParams.code_error;
+                ResponseStatus stautsCode = ResponseStatus.请求失败;
                 if (accountCard != null)
                 {
                     responseModel.JsonData = accountCard;
-                    stautsCode = ActionParams.code_ok;
+                    stautsCode = ResponseStatus.请求成功;
                 }
                 responseModel.StatusCode = stautsCode;
-                JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings();
-                string[] param = new string[] { "StatusCode", "JsonData", "AccountID", "HasCarNumber", "HasPhone" };
-                jsonSerializerSettings.ContractResolver = new LimitPropsContractResolver(param);
-                string jsonString = JsonConvert.SerializeObject(responseModel, jsonSerializerSettings);
-                return jsonString;
+                string[] param = new string[] { "JsonData", "AccountID", "HasCarNumber", "HasPhone" };
+                return this.JsonSuccessWithLimit(responseModel,param);
             }
             catch (Exception e)
             {
                 e.Save();
-                return JsonResponseModel.ErrorJson;
-                throw;
+                return this.JsonErrorStatus();
             }
         }
 
@@ -75,23 +70,23 @@ namespace QRMoveCar.Controllers
         /// <param name="accountPhone">手机号码</param>
         /// <param name="verifyCode">验证码</param>
         /// <returns></returns>
-        public string SaveCarInfo(string uniacid, string accountID, string carNumber, string accountPhone, string verifyCode)
+        public IActionResult SaveCarInfo(string uniacid, string accountID, string carNumber, string accountPhone, string verifyCode)
         {
 
             try
             {
                 thisData.CheckVerify(uniacid, accountPhone, verifyCode);
                 thisData.SaveCarInfo(uniacid, new ObjectId(accountID), carNumber, accountPhone);
-                return JsonResponseModel.SuccessJson;
+                return this.JsonSuccessStatus();
             }
             catch (ExceptionModel em)
             {
-                return JsonResponseModel.OtherJson(em.ExceptionParam);
+                return this.JsonOtherStatus(em.ExceptionParam);
             }
             catch (Exception e)
             {
                 e.Save();
-                return JsonResponseModel.ErrorJson;
+                return this.JsonErrorStatus();
             }
         }
 
@@ -101,23 +96,20 @@ namespace QRMoveCar.Controllers
         /// <param name="uniacid">商户ID</param>
         /// <param name="accountID">用户ID</param>
         /// <returns></returns>
-        public string GetCarInfo(string uniacid, string accountID)
+        public IActionResult GetCarInfo(string uniacid, string accountID)
         {
 
             try
             {
                 var account = thisData.GetAccountInfo(uniacid, new ObjectId(accountID));
-                var responseModel = new BaseResponseModel<AccountModel>() { StatusCode = ActionParams.code_ok, JsonData = account };
-                JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings();
-                string[] param = new string[] { "StatusCode", "JsonData", "AccountID", "CarNumber", "AccountPhoneNumber" };
-                jsonSerializerSettings.ContractResolver = new LimitPropsContractResolver(param);
-                string jsonString = JsonConvert.SerializeObject(responseModel, jsonSerializerSettings);
-                return jsonString;
+                var responseModel = new JsonResponse1<AccountModel>() { JsonData = account };
+                string[] param = new string[] { "JsonData", "AccountID", "CarNumber", "AccountPhoneNumber" };
+                return this.JsonSuccessWithLimit(responseModel,param);
             }
             catch (Exception)
             {
-                return JsonResponseModel.ErrorJson;
-                throw;
+                return this.JsonErrorStatus();
+              
             }
         }
 
@@ -127,7 +119,7 @@ namespace QRMoveCar.Controllers
         /// <param name="uniacid">商户ID</param>
         /// <param name="accountID">用户ID</param>
         /// <returns></returns>
-        public string CreateOrder(string uniacid, string accountID)
+        public IActionResult CreateOrder(string uniacid, string accountID)
         {
             try
             {
@@ -135,13 +127,13 @@ namespace QRMoveCar.Controllers
                 Order order = JsonConvert.DeserializeObject<Order>(json);
                 order.OrderID = ObjectId.GenerateNewId();
                 WXPayModel wpm = thisData.CreateOrder(uniacid, new ObjectId(accountID), order);
-                return new BaseResponseModel2<string, WXPayModel>() { StatusCode = ActionParams.code_ok, JsonData = order.OrderID.ToString(), JsonData1 = wpm }.ToJson();
+                return new JsonResponse2<string, WXPayModel>() { JsonData = order.OrderID.ToString(), JsonData1 = wpm }.ToJsonResult(this);
             }
             catch (Exception e)
             {
                 e.Save();
 
-                return JsonResponseModel.ErrorJson;
+                return this.JsonErrorStatus();
             }
 
         }
@@ -152,21 +144,21 @@ namespace QRMoveCar.Controllers
         /// <param name="uniacid">商户ID</param>
         /// <param name="accountID">用户ID</param>
         /// <returns></returns>
-        public string GetOrderList(string uniacid, string accountID)
+        public IActionResult GetOrderList(string uniacid, string accountID)
         {
             try
             {
                 List<Order> orders = thisData.GetOrderList(uniacid, new ObjectId(accountID));
                 if (orders == null || orders.Count == 0)
                 {
-                    return JsonResponseModel.SuccessJson;
+                    return this.JsonSuccessStatus();
                 }
-                return new BaseResponseModel<List<Order>>() { StatusCode = ActionParams.code_ok, JsonData = orders }.ToJson();
+                return new JsonResponse1<List<Order>>() { JsonData = orders }.ToJsonResult(this);
             }
             catch (Exception e)
             {
                 e.Save();
-                return JsonResponseModel.ErrorJson;
+                return this.JsonErrorStatus();
             }
         }
 
@@ -176,16 +168,16 @@ namespace QRMoveCar.Controllers
         /// <param name="uniacid">商户ID</param>
         /// <param name="accountID">用户ID</param>
         /// <returns></returns>
-        public string GetAccountInfo(string uniacid, string accountID)
+        public IActionResult GetAccountInfo(string uniacid, string accountID)
         {
             try
             {
-                return new BaseResponseModel<AccountModel>() { JsonData = thisData.GetAccountInfo(uniacid, new ObjectId(accountID)), StatusCode = ActionParams.code_ok }.ToJson();
+                return new JsonResponse1<AccountModel>() { JsonData = thisData.GetAccountInfo(uniacid, new ObjectId(accountID))}.ToJsonResult(this);
             }
             catch (Exception)
             {
-                return JsonResponseModel.ErrorJson;
-                throw;
+                return this.JsonErrorStatus();
+              
             }
         }
 
@@ -196,20 +188,20 @@ namespace QRMoveCar.Controllers
         /// <param name="currentAccountID">呼叫者账户ID</param>
         /// <param name="anotherAccountID">被呼叫者账户ID</param>
         /// <returns></returns>
-        public string CallAccount(string uniacid, string currentAccountID, string anotherAccountID)
+        public IActionResult CallAccount(string uniacid, string currentAccountID, string anotherAccountID)
         {
             try
             {
                 thisData.CallAccount(uniacid, new ObjectId(currentAccountID), new ObjectId(anotherAccountID));
-                return JsonResponseModel.SuccessJson;
+                return this.JsonSuccessStatus();
             }
             catch (ExceptionModel em)
             {
-                return JsonResponseModel.OtherJson(em.ExceptionParam);
+                return this.JsonOtherStatus(em.ExceptionParam);
             }
             catch (Exception)
             {
-                return JsonResponseModel.ErrorJson;
+                return this.JsonErrorStatus();
             }
         }
 
@@ -221,16 +213,16 @@ namespace QRMoveCar.Controllers
         /// <param name="accountID">用户ID</param>
         /// <param name="phoneNumber">手机号码</param>
         /// <returns></returns>
-        public string SetPhoneNumber(string uniacid, string accountID, string phoneNumber)
+        public IActionResult SetPhoneNumber(string uniacid, string accountID, string phoneNumber)
         {
             try
             {
                 thisData.SetPhoneNumber(uniacid, new ObjectId(accountID), phoneNumber);
-                return JsonResponseModel.SuccessJson;
+                return this.JsonSuccessStatus();
             }
             catch (Exception)
             {
-                return JsonResponseModel.ErrorJson;
+                return this.JsonErrorStatus();
             }
         }
 
@@ -251,17 +243,17 @@ namespace QRMoveCar.Controllers
         /// </summary>
         /// <param name="uniacid">商户识别ID</param>
         /// <returns></returns>
-        public string GetQRMoney(string uniacid)
+        public IActionResult GetQRMoney(string uniacid)
         {
             try
             {
                 var money = thisData.GetQRMoney(uniacid);
-                return new BaseResponseModel<decimal>() { StatusCode = ActionParams.code_ok, JsonData = money }.ToJson();
+                return new JsonResponse1<decimal>() { JsonData = money }.ToJsonResult(this);
             }
             catch (Exception)
             {
-                return JsonResponseModel.ErrorJson;
-                throw;
+                return this.JsonErrorStatus();
+              
             }
         }
     }

@@ -11,7 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Tools.DB;
 using Tools.Response;
-using Tools.ResponseModels;
+using Tools.Response.Json;
 using We7Tools.Extend;
 using We7Tools.Models;
 
@@ -51,7 +51,7 @@ namespace QRMoveCar.Controllers
             //hasIdentity = true;
             return RedirectToAction("Index", "Merchant");
         }
-        public string ReceiveWe7Data()
+        public IActionResult ReceiveWe7Data()
         {
             try
             {
@@ -59,12 +59,11 @@ namespace QRMoveCar.Controllers
                 var db = new MongoDBTool().GetMongoCollection<We7Temp>();
                 var we7Temp = new We7Temp() { Data = json };
                 db.InsertOne(we7Temp);
-                return new BaseResponseModel<string>() { StatusCode = Tools.ActionParams.code_ok, JsonData = we7Temp.We7TempID.ToString() }.ToJson();
+                return new JsonResponse1<string>() {  JsonData = we7Temp.We7TempID.ToString() }.ToJsonResult(this);
             }
             catch (Exception)
             {
-                return JsonResponseModel.ErrorJson;
-                throw;
+                return this.JsonErrorStatus();
             }
         }
     }

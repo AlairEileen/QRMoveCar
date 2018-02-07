@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using QRMoveCar.AppData;
@@ -10,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Tools.Models;
 using Tools.Response;
+using Tools.Response.Json;
 using We7Tools;
 using We7Tools.Extend;
 using YTXDAL;
@@ -18,8 +20,12 @@ namespace QRMoveCar.Controllers
 {
     public class MerchantController : BaseController<MerchantData, CompanyModel>
     {
+        private IHostingEnvironment hostingEnvironment;
 
-        public MerchantController() : base(true) { }
+        public MerchantController(IHostingEnvironment environment) : base(true)
+        {
+            hostingEnvironment = environment;
+        }
 
         // GET: /<controller>/
         public IActionResult Index()
@@ -38,19 +44,21 @@ namespace QRMoveCar.Controllers
             var companyModel = thisData.GetCompanyModel(HttpContext.Session.GetUniacID());
             if (companyModel == null)
             {
-                companyModel = new CompanyModel() { ProcessMiniInfo = new ProcessMiniInfo(), QiNiuModel = new QiNiuModel(),YTX=new YTXModel() };
+                companyModel = new CompanyModel() { ProcessMiniInfo = new ProcessMiniInfo(), QiNiuModel = new QiNiuModel(), YTX = new YTXModel() };
             }
             return View(new ManageViewModel()
             {
                 ProcessMiniInfo = companyModel.ProcessMiniInfo,
-                YTX = (companyModel.YTX==null?new YTXModel(): companyModel.YTX),
-                QRSendFee = companyModel.QRSendFee
+                YTX = (companyModel.YTX == null ? new YTXModel() : companyModel.YTX),
+                QRSendFee = companyModel.QRSendFee,
+                uniacid = companyModel.uniacid,
+                HasWeChatQRverifyFileName = companyModel.HasWeChatQRverifyFileName
             });
         }
 
         public IActionResult Feedback()
         {
-            List<FeedbackModel> fblist=thisData.GetFeedbackList(HttpContext.Session.GetUniacID());
+            List<FeedbackModel> fblist = thisData.GetFeedbackList(HttpContext.Session.GetUniacID());
             return View(fblist);
         }
         public IActionResult AccountInfo()
@@ -85,56 +93,70 @@ namespace QRMoveCar.Controllers
         /// </summary>
         /// <param name="qRSendFee"></param>
         /// <returns></returns>
-        public string SetQRSendFee(decimal qRSendFee)
+        public IActionResult SetQRSendFee(decimal qRSendFee)
         {
             try
             {
                 thisData.SetQRSendFee(HttpContext.Session.GetUniacID(), qRSendFee);
-                return JsonResponseModel.SuccessJson;
+                return this.JsonSuccessStatus();
             }
             catch (Exception e)
             {
                 e.Save();
-                return JsonResponseModel.ErrorJson;
-                throw;
+                return this.JsonErrorStatus();
             }
         }
 
-        public string SetYTX()
+        public IActionResult SetYTX()
         {
             try
             {
                 string json = new StreamReader(Request.Body).ReadToEnd();
                 YTXModel qiNiuModel = JsonConvert.DeserializeObject<YTXModel>(json);
-                qiNiuModel.AccountSID= qiNiuModel.AccountSID.Trim();
-                qiNiuModel.AuthToken= qiNiuModel.AuthToken.Trim();
+                qiNiuModel.AccountSID = qiNiuModel.AccountSID.Trim();
+                qiNiuModel.AuthToken = qiNiuModel.AuthToken.Trim();
                 qiNiuModel.AppID = qiNiuModel.AppID.Trim();
                 thisData.SetYTX(HttpContext.Session.GetUniacID(), qiNiuModel);
-                return JsonResponseModel.SuccessJson;
+                return this.JsonSuccessStatus();
             }
             catch (Exception e)
             {
                 e.Save();
-                return JsonResponseModel.ErrorJson;
-                throw;
+                return this.JsonErrorStatus();
+               
             }
         }
 
-        public string SendOrder(string accountID)
+        public IActionResult SendOrder(string accountID)
         {
             try
             {
                 string json = new StreamReader(Request.Body).ReadToEnd();
                 Order order = JsonConvert.DeserializeObject<Order>(json);
-                thisData.SendOrder(HttpContext.Session.GetUniacID(),new ObjectId(accountID), order);
-                return JsonResponseModel.SuccessJson;
+                thisData.SendOrder(HttpContext.Session.GetUniacID(), new ObjectId(accountID), order);
+                return this.JsonSuccessStatus();
             }
             catch (Exception)
             {
-                return JsonResponseModel.ErrorJson;
-                throw;
+                return this.JsonErrorStatus();
+               
             }
         }
 
+        public IActionResult PushWeChatQRRuleVerify()
+        {
+            try
+            {
+                var files = Request.Form.Files;
+                thisData.PushWeChatQRRuleVerify(HttpContext.Session.GetUniacID(), files[0], hostingEnvironment.ContentRootPath);
+                return this.JsonSuccessStatus();
+            }
+            catch (Exception e)
+            {
+                e.Save();
+                return this.JsonErrorStatus();
+               
+            }
+        }
     }
 }

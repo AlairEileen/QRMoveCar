@@ -106,7 +106,7 @@
             data: JSON.stringify(json),
             dataType: "json",
             success: function (message) {
-                if (message.StatusCode == @((int)Tools.ActionParams.code_ok)) {
+                if (message.StatusCode == @((int)Tools.Response.ResponseStatus.请求成功)) {
                     alert("发货成功");
                     $("#sendOrderClose").click();
                 }

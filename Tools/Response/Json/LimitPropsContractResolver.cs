@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Tools.Json
+namespace Tools.Response.Json
 {
     public class LimitPropsContractResolver : DefaultContractResolver
     {

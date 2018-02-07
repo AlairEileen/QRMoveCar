@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ConfigData\ConfigData.csproj" />
-    <ProjectReference Include="..\Tools\Tools.csproj" />
   </ItemGroup>
 
 </Project>

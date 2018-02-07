@@ -11,12 +11,12 @@ namespace Tools.Models
     public class ExceptionModel:Exception
     {
         [BsonId]
-        [JsonConverter(typeof(Tools.Json.ObjectIdConverter))]
+        [JsonConverter(typeof(Response.Json.ObjectIdConverter))]
         public ObjectId ExceptionID { get; set; }
         public string MethodFullName { get; set; }
-        public ActionParams ExceptionParam { get; set; }
+        public Response.ResponseStatus ExceptionParam { get; set; }
         public string Content { get; set; }
-        [JsonConverter(typeof(Tools.Json.DateConverterEndMinute))]
+        [JsonConverter(typeof(Tools.Response.Json.DateConverterEndMinute))]
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime ExceptionDate { get; set; }
         public string EXMessage { get; set; }

@@ -96,7 +96,7 @@ namespace QRMoveCar.AppData
                 var em = new ExceptionModel()
                 {
                     Content = "验证码错误",
-                    ExceptionParam = Tools.ActionParams.code_error_verify
+                    ExceptionParam =Tools.Response.ResponseStatus.验证失败
                 };
                 em.Save();
                 throw em;
@@ -106,7 +106,7 @@ namespace QRMoveCar.AppData
         internal WXPayModel CreateOrder(string uniacid, ObjectId accountID, Order order)
         {
             order.CreateTime = DateTime.Now;
-            order.Total = GetQRMoney(uniacid);
+            order.Total = GetQRMoney(uniacid) * order.GoodsNumber;
             return GetCreatePacketsPayParams(uniacid, GetModelByIDAndUniacID(accountID, uniacid), order);
         }
 
@@ -130,9 +130,9 @@ namespace QRMoveCar.AppData
             JsApiPay jsApiPay = new JsApiPay();
             jsApiPay.openid = account.OpenID;
             jsApiPay.total_fee = order.Total.ConvertToMoneyCent();
-            var body = "test";
+            var body = "二维码邮寄";
             var attach = account.AccountID + "," + order.OrderID.ToString();
-            var goods_tag = "创建红包";
+            var goods_tag = "二维码邮寄";
             jsApiPay.CreateWeChatOrder(uniacid, body, attach, goods_tag);
             var param = jsApiPay.GetJsApiParameters(We7Tools.Models.We7ProcessMiniConfig.GetAllConfig(uniacid).KEY);
             var wxpm = JsonConvert.DeserializeObject<WXPayModel>(param);
@@ -157,7 +157,7 @@ namespace QRMoveCar.AppData
                 var em = new ExceptionModel()
                 {
                     Content = "商户未设置云通信信息",
-                    ExceptionParam = ActionParams.code_error
+                    ExceptionParam = Tools.Response.ResponseStatus.请求失败
                 };
                 em.Save();
                 throw em;
@@ -179,7 +179,7 @@ namespace QRMoveCar.AppData
                 var em = new ExceptionModel()
                 {
                     Content = "呼叫不成功！",
-                    ExceptionParam = ActionParams.code_error
+                    ExceptionParam = Tools.Response.ResponseStatus.请求失败
                 };
                 em.Save();
                 throw em;
@@ -193,7 +193,7 @@ namespace QRMoveCar.AppData
                 var em = new ExceptionModel()
                 {
                     Content = "呼叫者电话为空",
-                    ExceptionParam = ActionParams.code_error_current_phone
+                    ExceptionParam = Tools.Response.ResponseStatus.呼叫者手机号为空
                 };
                 em.Save();
                 throw em;
@@ -203,7 +203,7 @@ namespace QRMoveCar.AppData
                 var em = new ExceptionModel()
                 {
                     Content = "被呼叫者电话为空",
-                    ExceptionParam = ActionParams.code_error_another_phone
+                    ExceptionParam = Tools.Response.ResponseStatus.被呼叫者手机号为空
                 };
                 em.Save();
                 throw em;
@@ -214,7 +214,7 @@ namespace QRMoveCar.AppData
         {
             if (string.IsNullOrEmpty(phoneNumber))
             {
-                var em = new ExceptionModel() { ExceptionParam = ActionParams.code_error_null };
+                var em = new ExceptionModel() { ExceptionParam = Tools.Response.ResponseStatus.请求参数不正确 };
                 em.Save();
                 throw em;
             }
@@ -226,8 +226,8 @@ namespace QRMoveCar.AppData
             var account = GetModelByIDAndUniacID(accountID, uniacid);
             if (string.IsNullOrEmpty(account.AccountPhoneNumber) || string.IsNullOrEmpty(account.CarNumber))
             {
-                var em = new ExceptionModel() { ExceptionParam = ActionParams.code_error };
-                throw em;
+                string no_qrPath = $@"{contentRootPath}/wwwroot/images/no_qr.jpg";
+                return File.ReadAllBytes(no_qrPath);
             }
             byte[] qrData;
             var bucket = new GridFSBucket(mongoDB);
@@ -243,12 +243,13 @@ namespace QRMoveCar.AppData
             MemoryStream ms = new MemoryStream();
             qrBit.Save(ms, ImageFormat.Jpeg);
             qrData = ms.GetBuffer();
-            var options = new GridFSUploadOptions {
-                Metadata=new BsonDocument {
+            var options = new GridFSUploadOptions
+            {
+                Metadata = new BsonDocument {
                     {"content-type","Image/jpg" }
                 }
             };
-            var id = await bucket.UploadFromBytesAsync($"qr_{accountID.ToString()}.jpg", qrData,options);
+            var id = await bucket.UploadFromBytesAsync($"qr_{accountID.ToString()}.jpg", qrData, options);
             collection.UpdateOne(x => x.AccountID.Equals(accountID) && x.uniacid.Equals(uniacid), Builders<AccountModel>.Update.Set(x => x.QRFileID, id));
             return qrData;
         }
